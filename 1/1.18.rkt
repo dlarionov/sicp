@@ -1,16 +1,18 @@
 #lang racket
 
-; алгоритм плох - O(n)
+(define (double x)
+  (* x 2))
 
-(define (M a b)
-  (define (double x)
-    (+ x x))
-  (define (iter value param)
-    (if (= b param)
-        value
-        (if (> b (double param))
-            (iter (double value) (double param))
-            (iter (+ a value) (+ 1 param)))))
-  (iter a 1))
+(define (halve x)
+  (/ x 2))
 
-(M 8 7)
+(define (M x y)  
+  (define (iter a b c)
+    (if (= b 1)
+        (+ a c)
+        (if (even? b)
+            (iter (double a) (halve b) c)
+            (iter a (- b 1) (+ a c)))))
+  (iter x y 0))
+
+(M 6 7)
