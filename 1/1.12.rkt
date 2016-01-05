@@ -1,15 +1,15 @@
 #lang racket
 
-(define (P r c)
-  (if (or (= c 1) (= c r))
+(define (pascal-tiangle-item row col)
+  (if (or (= col 1) (= col row))
       1
       (+
-       (P (- r 1) (- c 1))
-       (P (- r 1) c)
+       (pascal-tiangle-item (- row 1) (- col 1))
+       (pascal-tiangle-item (- row 1) col)
        )))
 
-(P 6 3)
-(P 7 4)
-(P 6 5)
-(P 6 6)
+(pascal-tiangle-item 6 3)
+(pascal-tiangle-item 7 4)
+(pascal-tiangle-item 6 5)
+(pascal-tiangle-item 6 6)
 

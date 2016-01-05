@@ -11,14 +11,14 @@
 
 (define (prime? n) 
   (define (iter times)
-    (define (test) 
+    (define (test)      
       (define (try a) 
         (= (expmod a n n) a))
-      (try (random (- n 1))))
+      (try (random (+ 1 (- n 1)))))
     (cond ((= times 0) true) 
           ((test) (iter (- times 1))) 
           (else false)))
-  (iter 10))
+  (iter 100))
 
 (define (test n)
   (define (runtime) 

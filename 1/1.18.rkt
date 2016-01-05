@@ -1,5 +1,7 @@
 #lang racket
 
+; алгоритм плох - O(n)
+
 (define (M a b)
   (define (double x)
     (+ x x))

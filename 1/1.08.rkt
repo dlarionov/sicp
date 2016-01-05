@@ -1,4 +1,5 @@
 #lang racket
+
 (define (square x)
   (* x x))
 
@@ -12,23 +13,24 @@
   (/ (+ a b) 2))
 
 (define (sqrt x)
-
+  
   (define (improve guess)
     (avg guess (/ x guess)))
-
+  
   (define (good? guess)
     (< (abs (- guess (improve guess))) (% 0.001 guess)))
-
+  
   (define (iter guess)
-    (if (good? guess) guess
+    (if (good? guess) 
+        guess
         (iter (improve guess))))
-
+  
   (if (= 0 x)
       0
       (iter 1.0)))
 
 (define (cbrt x)
-
+  
   (define (improve guess)
     (/ (+
         (/ x (square guess))
@@ -37,11 +39,11 @@
   
   (define (good? guess)
     (< (abs (- guess (improve guess))) (% 0.001 guess)))
-
+  
   (define (iter guess)
     (if (good? guess) guess
         (iter (improve guess))))
-
+  
   (if (= 0 x)
       0
       (iter 1.0)))

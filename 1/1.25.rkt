@@ -5,7 +5,7 @@
 (define (expmod b n m) 
   (cond ((= n 0) 1) 
         ((even? n)
-         (remainder (square (expmod b (/ n 2) m)) m)) 
+         (remainder (square (expmod b (/ n 2) m)) m))
         (else 
          (remainder (* b (expmod b (- n 1) m)) m))))
 
@@ -21,14 +21,14 @@
 
 (define (prime? n) 
   (define (iter times)
-    (define (test) 
+    (define (test)      
       (define (try a) 
         (= (my-expmod a n n) a))
-      (try (random (- n 1))))
+      (try (random (+ 1 (- n 1)))))
     (cond ((= times 0) true) 
           ((test) (iter (- times 1))) 
           (else false)))
-  (iter 10000))
+  (iter 100000))
 
 (define (test n)
   (define (runtime) 
@@ -46,17 +46,13 @@
   (start (runtime)))
 
 (define (search-for-primes from count)
-  (define (iter v i)
+  (define (iter n i)
     (cond [(> i 0)        
-           (if (test v)
-               (iter (+ v 1) (- i 1))
-               (iter (+ v 1) i))]))
+           (if (test n)
+               (iter (+ 1 n) (- i 1))
+               (iter (+ 1 n) i))]))
   (iter from count))
 
 (search-for-primes 1000 1)
 (search-for-primes 10000 1)
 (search-for-primes 100000 1)
-(search-for-primes 1000000 1)
-(search-for-primes 10000000 1)
-(search-for-primes 100000000 1)
-(search-for-primes 1000000000 1)

@@ -19,7 +19,8 @@
   (* (/ b 100) a))
 
 (define (sqrt-iter guess x)
-  (if (new-good-enouth? (improve guess x) guess) guess
+  (if (new-good-enouth? (improve guess x) guess) 
+      guess
       (sqrt-iter (improve guess x) x)))
 
 (define (sqrt x)
