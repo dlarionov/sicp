@@ -1,0 +1,10 @@
+#lang racket
+
+(define (test x y)
+  (if (= x 0)
+      0
+      y))
+
+(define (p) p)
+
+(test 0 (p))
