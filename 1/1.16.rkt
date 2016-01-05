@@ -2,20 +2,32 @@
 
 (define (square x) (* x x))
 
-(define (expr b n)
-  (cond [(= n 0) 1]
-        [(even? n) (square (expr b (/ n 2)))]
-        [else (* b (expr b (- n 1)))]))
+; O(log(n)) / O(log(n))
+(define (exp-recursive base exp)
+  (cond [(= exp 0) 1]
+        [(even? exp) (square (exp-recursive base (/ exp 2)))]
+        [else (* base (exp-recursive base (- exp 1)))]))
 
-(define (expi b n)
-  (define (iter value degree)
-    (if (= n degree)
-        value
-        (if (> n (* 2 degree))
-            (iter (square value) (* 2 degree))
-            (iter (* b value) (+ 1 degree)))))
-  (iter b 1))
+; O(n) / O(1)
+(define (exp-iterative-bad base exp)
+  (define (iter b i)
+    (if (= exp i)
+        b
+        (if (> exp (* 2 i))
+            (iter (square b) (* 2 i))
+            (iter (* base b) (+ 1 i)))))
+  (iter base 1))
 
-(= (expr 2 64) (expi 2 64))
+; O(log(n)) / O(1)
+(define (exp-iterative-good base exp)
+  (define (iter a b n)
+    (if (= 1 n)
+        (* a b)
+        (if (even? n)
+            (iter a (square b) (/ n 2))
+            (iter (* a b) b (- n 1)))))
+  (iter 1 base exp))
 
-; expi - плох. его порядок роста все еще O(n), а не O(log(n))
+(exp-recursive 2 64)
+(exp-iterative-bad 2 64)
+(exp-iterative-good 2 64)
