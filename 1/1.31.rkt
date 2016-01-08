@@ -7,7 +7,6 @@
         (iter (next x) (* result (term x)))))
   (iter a 1))
 
-
 (define (multiply-recursive term a next b)
   (if (> a b)
       1
