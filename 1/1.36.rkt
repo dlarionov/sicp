@@ -1,7 +1,7 @@
 #lang racket
 
 (define (~= a b) ; approximately equals
-  (< (abs (- a b)) 0.0001 ))
+  (< (abs (- a b)) 0.00001 ))
 
 (define (fixed-point f guess)  
   (define (try x n)
@@ -16,7 +16,7 @@
              (newline)))
           ((lambda ()
              (display "approximation ")
-             (display y)
+             (display x)
              (newline)
              (try y (+ 1 n))))
           )))
