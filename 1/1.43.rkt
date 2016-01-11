@@ -2,12 +2,10 @@
 
 (define (repeat f times)
   (define (iter i g)
-    (if (> i times)
+    (if (= i times)
         g
-        (iter (+ 1 i) (f g))))
-  (iter 0 (lambda (x) (f x))))
+        (iter (+ 1 i) (lambda (x) (f (g x))))))
+  (iter 1 (lambda (x) (f x))))
 
-(define (inc x) (+ 1 x))
-
-((repeat inc 2) 0)
+((repeat (lambda (x) (* x x)) 2) 5)
   
