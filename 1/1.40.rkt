@@ -28,7 +28,3 @@
   (lambda (x) (+ c (* x (+ b (* x (+ a x)))))))
 
 (newton-method (cube-good 1 1 -3) 1.0)
-
-
-  
-
