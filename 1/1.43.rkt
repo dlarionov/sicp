@@ -8,4 +8,3 @@
   (iter 1 (lambda (x) (f x))))
 
 ((repeat (lambda (x) (* x x)) 2) 5)
-  
