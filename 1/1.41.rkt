@@ -6,8 +6,8 @@
 (define (inc x)
   (+ 1 x))
 
+
 ((double inc) 0)
 (((double double) inc) 0)
-(((double double) (double inc)) 0)
 (((double (double double)) inc) 0)
-
+(((double double)(double inc)) 0)

@@ -7,3 +7,4 @@
   (lambda (x) (f (g x))))
 
 ((compose square inc) 6)
+((compose inc square) 6)
