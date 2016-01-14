@@ -23,6 +23,3 @@
 
 (define (n-smooth f n)
   ((repeat smooth n) f))
-
-
-  
