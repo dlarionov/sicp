@@ -14,7 +14,7 @@
 (define (improve guess x)
   (avg guess (/ x guess)))
 
-(define (good-enouth? guess x)
+(define (good-enough? guess x)
   (< (abs (- (square guess) x)) 0.01))
 
 (define (new-if predicate then-clause else-clause)
@@ -22,7 +22,7 @@
         (else else-clause)))
 
 (define (sqrt-iter guess x)
-  (new-if (good-enouth? guess x) 
+  (new-if (good-enough? guess x) 
           guess
           (sqrt-iter (improve guess x) x)))
 
@@ -35,6 +35,3 @@
 ; поэтому процедура подвисает, пытаясь вычислить аргументы new-if,
 ; одним из аргументов которой является sqrt-iter, при вычислении которого
 ; снова нужно выичислить new-if (и тд.).
-
-
-
