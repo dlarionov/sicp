@@ -23,17 +23,6 @@
     ;(display "length:")(display l)(display " structure:")(display s)(newline)
     (+ l (if (pair? s) (total-weight s) s))))
 
-(define a (make-branch 3 2))
-(define m (make-mobile a a))
-(define b (make-branch 2 m))
-(define n (make-mobile b b))
-(define c (make-branch 1 n))
-(define k (make-mobile b c))
-
-(total-weight m)
-(total-weight n)
-(total-weight k)
-
 (define (fringe tree)
   (define (iter source target)
     (if (null? source)
@@ -51,11 +40,38 @@
       0
       (+ (car items) (sum (cdr items)))))
 
-(define (total-weight-good m)
+(define (total-weight-fringe m)
   (sum (fringe m)))
 
-(total-weight-good m)
-(total-weight-good n)
-(total-weight-good k)
+(define a (make-branch 2 1))
+(define m (make-mobile a a))
+(define b (make-branch 3 m))
+(define n (make-mobile b b))
+(define c (make-branch 4 n))
+(define k (make-mobile b c))
 
+(total-weight m)
+(total-weight n)
+(total-weight k)
+(total-weight-fringe m)
+(total-weight-fringe n)
+(total-weight-fringe k)
 
+(define (balanced? m)  
+  (let ((lb (left-branch m))
+        (rb (right-branch m)))
+    (= 
+     (* (branch-length lb) (branch-weight lb)) 
+     (* (branch-length rb) (branch-weight rb)))))
+
+(define (balanced-deep? m)
+  (if (not (pair? m))
+      #t
+      (and 
+       (balanced? m)
+       (balanced-deep? (branch-structure (left-branch m)))
+       (balanced-deep? (branch-structure (right-branch m))))))
+
+(balanced-deep? m)
+(balanced-deep? n)
+(balanced-deep? k)
