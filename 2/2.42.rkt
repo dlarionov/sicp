@@ -50,13 +50,14 @@
           true        
           (let ((next-queen-row (car tail))
                 (next-queen-col col))
-            (if (or (= added-queen-row next-queen-row)
-                    (= (+ added-queen-row added-queen-col) (+ next-queen-row next-queen-col))
+            (if (or (= added-queen-row next-queen-row) ; -
+                    ;(= added-queen-col next-queen-col) ; |
+                    (= (+ added-queen-row added-queen-col) (+ next-queen-row next-queen-col)) ; \
+                    (= (+ added-queen-row (- (+ 1 k) added-queen-col)) (+ next-queen-row (- (+ 1 k) next-queen-col))) ; /                 
                     )
                 false
                 (iter (+ 1 col) (cdr tail))))))    
     (iter 2 (cdr position))))
 
-
-(queens 3)
+(queens 8)
 
