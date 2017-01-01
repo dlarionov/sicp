@@ -4,6 +4,28 @@
 (define (variable? x) (symbol? x))
 (define (same-variable? x y) (and (variable? x) (variable? y) (eq? x y)))
 
+(define (sum-of-items items)
+  (if (null? items)
+      0
+      (+ (car items) (sum-of-items (cdr items)))))
+
+(define (make-sum-of-items items)
+  (let ((result
+         (filter
+          (lambda(i) (not (=number? i 0)))
+          (cons
+           (sum-of-items (filter (lambda(i) (number? i)) items))
+           (filter (lambda(i) (not (number? i))) items)))))
+    (if (pair? result)
+        (if (null? (cdr result))
+            (car result)
+            (append (list '+) result))
+        0)))
+
+(make-sum-of-items (list 1 2 'x 3 'yz 0 42))
+(make-sum-of-items (list 1 'x -1))
+(make-sum-of-items (list))
+
 (define (sum? x) (and (pair? x) (eq? (car x) '+)))
 (define (make-sum a b)
   (cond ((=number? a 0) b)
@@ -11,7 +33,10 @@
         ((and (number? a) (number? b)) (+ a b))
         (else (list '+ a b))))
 (define (addend x) (car (cdr x)))
-(define (augend x) (car (cdr (cdr x))))
+(define (augend x)
+  (if (null? (cdr (cdr (cdr x))))
+      (car (cdr (cdr x)))
+      (make-sum (addend (cdr x)) (augend (cdr x)))))
 
 (define (product? x) (and (pair? x) (eq? (car x) '*)))
 (define (make-product a b)
@@ -22,7 +47,10 @@
         ((and (number? a) (number? b)) (* a b))
         (else (list '* a b))))
 (define (multiplier x) (car (cdr x)))
-(define (multiplicand x) (car (cdr (cdr x))))
+(define (multiplicand x)
+  (if (null? (cdr (cdr (cdr x))))
+      (car (cdr (cdr x)))
+      (make-product (multiplier (cdr x)) (multiplicand (cdr x)))))
 
 (define (exp? x) (and (pair? x) (eq? (car x) '^)))
 (define (make-exp x n)
@@ -54,5 +82,4 @@
             (deriv b var))))
         ))
 
-
-(deriv '(+ (^ x 3) (* x (* x x))) 'x)
+(deriv '(+ (^ x 3) (* x 2 x) (* x x y x x) (+ 1 2 3 x)) 'x)
