@@ -7,10 +7,7 @@
 
 (define (adjoin-set x set) (cons x set))
 
-(define (union-set a b)
-  (if (null? a)
-      b
-      (union-set (cdr a) (cons (car a) b))))
+(define (union-set a b) (append a b)
 
 (union-set '(1 2 2 3 4) '(3 4 3 5))
 
