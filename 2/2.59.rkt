@@ -13,9 +13,7 @@
 (define (union-set a b)
   (if (null? a)
       b
-      (if (element-of-set? (car a) b)
-          (union-set (cdr a) b)
-          (union-set (cdr a) (cons (car a) b)))))
+      (union-set (cdr a) (adjoin-set (car a) b))))
 
 (union-set '(1 2 3 4) '(3 4 5))
 
