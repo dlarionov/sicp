@@ -1,0 +1,85 @@
+#lang racket
+
+(define (=number? x y) (and (number? x) (= x y)))
+(define (variable? x) (symbol? x))
+(define (same-variable? x y) (and (variable? x) (variable? y) (eq? x y)))
+
+(define (sum? x) (and (pair? x) (eq? (car x) '+)))
+(define (make-sum a b)
+  (cond ((=number? a 0) b)
+        ((=number? b 0) a)
+        ((and (number? a) (number? b)) (+ a b))
+        (else (list '+ a b))))
+(define (addend x) (car (cdr x)))
+(define (augend x)
+  (if (null? (cdr (cdr (cdr x))))
+      (car (cdr (cdr x)))
+      (make-sum (addend (cdr x)) (augend (cdr x)))))
+
+(define (product? x) (and (pair? x) (eq? (car x) '*)))
+(define (make-product a b)
+  (cond ((=number? a 0) 0)
+        ((=number? b 0) 0)
+        ((=number? a 1) b)
+        ((=number? b 1) a)
+        ((and (number? a) (number? b)) (* a b))
+        (else (list '* a b))))
+(define (multiplier x) (car (cdr x)))
+(define (multiplicand x)
+  (if (null? (cdr (cdr (cdr x))))
+      (car (cdr (cdr x)))
+      (make-product (multiplier (cdr x)) (multiplicand (cdr x)))))
+
+(define (exp? x) (and (pair? x) (eq? (car x) '^)))
+(define (make-exp x n)
+  (cond ((=number? n 0) 1)
+        ((=number? n 1) x)
+        ((and (number? x) (number? n)) (expt x n))
+        (else (list '^ x n))))
+(define (base x) (car (cdr x)))
+(define (power x) (car (cdr (cdr x))))
+
+(define *op-table* (make-hash))
+(define (put op type proc)
+  (hash-set! *op-table* (list op type) proc))
+(define (get op type)
+  (hash-ref *op-table* (list op type) '()))
+
+(define (operator exp) (car exp))
+
+(define (deriv exp var)
+  (install-sum-package)
+  (install-product-package)
+  (install-expt-package)
+  (cond ((number? exp) 0)
+        ((variable? exp)
+         (if (same-variable? exp var) 1 0))
+        (else
+         ((get 'deriv (operator exp)) exp var))))
+
+(define (install-sum-package)
+  (define (deriv-sum exp var)
+    (make-sum
+     (deriv (addend exp) var)
+     (deriv (augend exp) var)))
+  (put 'deriv '+ deriv-sum))
+
+(define (install-product-package)
+  (define (deriv-product exp var)
+    (make-sum
+     (make-product (multiplier exp)
+                   (deriv (multiplicand exp) var))
+     (make-product (deriv (multiplier exp) var)
+                   (multiplicand exp))))
+  (put 'deriv '* deriv-product))
+
+(define (install-expt-package)
+  (define (deriv-expt exp var)
+    (let ((b (base exp))
+          (n (power exp)))
+      (make-product
+       (make-product n (make-exp b (- n 1)))
+       (deriv b var))))
+  (put 'deriv '^ deriv-expt))
+
+(deriv '(+ (^ x 3) (* x 2 x) (* x x y x x) (+ 1 2 3 x)) 'x)
