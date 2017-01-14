@@ -52,7 +52,7 @@
     (define (iter tail)
       (if (null? tail)
           null
-          (let ((i (person? tail) tail (car tail)))
+          (let ((i (if (person? tail) tail (car tail))))
             (if (eq? (get-name i) name)
                 i
                 (iter (cdr tail))))))                
@@ -74,7 +74,7 @@
 
 (define (get-salary dep name)
   (let ((r (get-record dep name)))
-    (if (pair? r)
+    (if (person? r)
         ((get dep 'get-salary) r)
         null)))
 
@@ -87,7 +87,7 @@
     (if (null? tail)
         null
         (let ((r (get-record (car tail) name)))
-          (if (pair? r)
+          (if (person? r)
               r
               (iter (cdr tail))))))
   (iter deps))
