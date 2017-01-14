@@ -6,16 +6,22 @@
 (define (get op type)
   (hash-ref *op-table* (list op type) '()))
 
-(define (install-package-dep1)
-  (define (make-person name salary address) (list name salary address))
-  (define (get-name person) (car person))
-  (define (get-salary person) (cadr person))
-  (define (get-address person) (caddr person))
+(define (set-type type obj) (cons type obj))
+(define (get-type tobj) (car tobj))
+(define (get-obj tobj) (cdr tobj))
 
+(define (person? p)
+  (and (pair? p) (eq? (get-type p) 'person)))
+
+(define (install-package-dep1)
+  (define (make-person name salary position) (set-type 'person (list name salary position)))
+  (define (get-name p) (if (person? p) (car (get-obj p)) null))
+  (define (get-salary p) (if (person? p) (cadr (get-obj p)) null))
+  
   (define db
     (list
-     (make-person 'Alice '42 'Moon)
-     (make-person 'Ivan '10 'Earth)))
+     (make-person 'Alice '42 'Manager)
+     (make-person 'Ivan '10 'Programer)))
 
   (define (get-record name)
     (define (iter tail)
@@ -27,14 +33,13 @@
     (iter db))
      
   (put 'dep1 'get-record get-record)
-  (put 'dep1 'get-salary  get-salary )
+  (put 'dep1 'get-salary  get-salary)
   )
 
 (define (install-package-dep2)
-  (define (make-person name salary address) (cons name (cons salary address)))
-  (define (get-name person) (car person))
-  (define (get-salary person) (cadr person))
-  (define (get-address person) (cddr person))
+  (define (make-person name salary address) (set-type 'person (cons name (cons salary address))))
+  (define (get-name p) (if (person? p) (car (get-obj p)) null))
+  (define (get-salary p) (if (person? p) (cadr (get-obj p)) null))
 
   (define db
     (cons
@@ -47,18 +52,14 @@
     (define (iter tail)
       (if (null? tail)
           null
-          (let ((i (car tail)))
-            (if (pair? i)
-                (if (eq? (get-name i) name)
-                    i
-                    (iter (cdr tail)))
-                (if (eq? (get-name tail) name)
-                    tail
-                    null)))))                
+          (let ((i (person? tail) tail (car tail)))
+            (if (eq? (get-name i) name)
+                i
+                (iter (cdr tail))))))                
     (iter db))
   
   (put 'dep2 'get-record get-record)
-  (put 'dep2 'get-salary  get-salary )
+  (put 'dep2 'get-salary  get-salary)
   )
 
 (install-package-dep1)
