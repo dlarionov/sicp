@@ -41,11 +41,6 @@
   (put 'make-from-mag-ang 'rectangular 
        (lambda (r a) (tag (make-from-mag-ang r a)))))
 
-(define (real-part z) (apply-generic 'real-part z))
-(define (imag-part z) (apply-generic 'imag-part z))
-(define (magnitude z) (apply-generic 'magnitude z))
-(define (angle z) (apply-generic 'angle z))
-
 (define (install-complex-package)
   (define (make-from-real-imag x y)
     ((get 'make-from-real-imag 'rectangular) x y))
@@ -84,14 +79,17 @@
   (put 'magnitude '(complex) magnitude)
   (put 'angle '(complex) angle))
 
-(define (make-complex-from-real-imag x y)
-  ((get 'make-from-real-imag 'complex) x y))
+(define (real-part z) (apply-generic 'real-part z))
+(define (imag-part z) (apply-generic 'imag-part z))
+(define (magnitude z) (apply-generic 'magnitude z))
+(define (angle z) (apply-generic 'angle z))
 
 (define (test)
   (install-rectangular-package)
   (install-complex-package)
+  (define (make-complex-from-real-imag x y)
+    ((get 'make-from-real-imag 'complex) x y))
   (let ((x (make-complex-from-real-imag 3 4)))
     (magnitude x)))
 
 (test)
-
