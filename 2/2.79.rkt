@@ -13,9 +13,14 @@
 (define (apply-generic op . args)
   (let ((type-tags (map type-tag args)))
     (let ((proc (get op type-tags)))
+      (print op)
+      (print type-tags)
+      (print proc)
+      (newline)
       (apply proc (map contents args)))))
 
 (define (equ? z1 z2) (apply-generic 'equ? z1 z2))
+(define (zero? z) (apply-generic 'zero? z))
 
 (define (install-scheme-number-package)
   (define (tag x) (attach-tag 'scheme-number x))
@@ -31,6 +36,8 @@
        (lambda (x) (tag x)))
   (put 'equ? '(scheme-number scheme-number)
        (lambda (x y) (= x y)))
+  (put 'zero? '(scheme-number)
+       (lambda (x) (= x 0)))
   )
 
 (define (install-rational-package)
@@ -72,7 +79,10 @@
   (put 'equ? '(rational rational)
        (lambda (x y) (and
                       (= (numer x) (numer y))
-                      (= (denom x) (denom y))))))
+                      (= (denom x) (denom y)))))
+  (put 'zero? '(rational)
+       (lambda (x) (= (numer x) 0)))
+  )
 
 (define (real-part z) (apply-generic 'real-part z))
 (define (imag-part z) (apply-generic 'imag-part z))
@@ -175,7 +185,8 @@
        (lambda (x y) (and
                       (= (real-part x) (real-part y))
                       (= (imag-part x) (imag-part y)))))
-  
+  (put 'zero? '(complex)
+       (lambda (x) (= (magnitude x) 0)))  
   )
 
 (install-scheme-number-package)
@@ -194,3 +205,7 @@
 (equ? (make-sheme-number 42) (make-sheme-number 24))
 (equ? (make-rational 4 2) (make-rational 4 2))
 (equ? (make-complex-from-real-imag 3 4) (make-complex-from-mag-ang 5 7))
+
+(zero? (make-sheme-number 0))
+(zero? (make-rational 0 3))
+(zero? (make-complex-from-mag-ang 0 7))
