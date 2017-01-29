@@ -26,6 +26,13 @@
           )))    
   (iter '() args))
 
+(define (make-set args)
+  (filter
+   (lambda(i)(not (null? i)))
+   (map
+    (lambda(i) (cast-args i args))
+    types)))
+
 (define (apply-generic op . args)
   (define (apply-generic-internal local-args)
     (print local-args)
@@ -42,19 +49,16 @@
           (if result
               result
               (apply-generic-iter (cdr set))))))  
-  (let ((result (apply-generic-internal args)))
-    (if result
-        result
-        (let ((types (remove-duplicates (map type-tag args))))
-          (if (> (length types) 1)              
-              (let ((set (filter
-                          (lambda(i)(not (null? i)))
-                          (map
-                           (lambda(i) (cast-args i args))
-                           types))))
-                (apply-generic-iter set))
-              (error "No method for these types"))))))
-          
+  (let ((types (remove-duplicates (map type-tag args))))
+    (if (> (length types) 1)              
+        (let ((set (filter
+                    (lambda(i)(not (null? i)))
+                    (map
+                     (lambda(i) (cast-args i args))
+                     types))))
+          (apply-generic-iter (cons args set)))
+        (apply-generic-iter (list set)))))
+
 (put-coerciont 't2 't1 (lambda(x) (cons 't1 (cdr x))))
 (put-coerciont 't1 't2 (lambda(x) (cons 't2 (cdr x))))
 (put-coerciont 't3 't2 (lambda(x) (cons 't2 (cdr x))))
