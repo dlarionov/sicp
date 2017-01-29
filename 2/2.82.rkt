@@ -26,7 +26,7 @@
           )))    
   (iter '() args))
 
-(define (make-set args)
+(define (make-set types args)
   (filter
    (lambda(i)(not (null? i)))
    (map
@@ -35,8 +35,6 @@
 
 (define (apply-generic op . args)
   (define (apply-generic-internal local-args)
-    (print local-args)
-    (newline)
     (let ((type-tags (map type-tag local-args)))
       (let ((proc (get op type-tags)))
         (if (null? proc)
@@ -51,11 +49,7 @@
               (apply-generic-iter (cdr set))))))  
   (let ((types (remove-duplicates (map type-tag args))))
     (if (> (length types) 1)              
-        (let ((set (filter
-                    (lambda(i)(not (null? i)))
-                    (map
-                     (lambda(i) (cast-args i args))
-                     types))))
+        (let ((set (make-set types args)))
           (apply-generic-iter (cons args set)))
         (apply-generic-iter (list set)))))
 
