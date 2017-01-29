@@ -32,6 +32,8 @@
 
 (define (raise-args type args)
   args)
+(define (max-type types)
+  (car types))
 
 (define (install-integer-package)
   (define (tag x) (attach-tag 'integer x))  
@@ -114,43 +116,37 @@
   (put 'raise '(integer) (lambda (x) (make-rational x 1)))
   (put 'raise '(rational) (lambda (x) (make-number (/ (numer x) (denom x)))))
   (put 'raise '(number) (lambda (x) (make-complex-from-real-imag x 0)))
-  
-  ;(raise (raise (raise (make-integer 42))))
+
+  (define tower
+    '((integer 1)
+      (rational 2)
+      (number 3)
+      (complex 4)))
+
+  (define (get-index x)
+    (define (iter tail)
+      (if (null? tail)
+          -1
+          (let ((i (car tail)))
+            (if (eq? (car i) x)
+                (cdr i)
+                (iter (cdr tail))))))
+    (iter tower))
+
+  (define (max-type types)
+    (define (iter guess tail)
+      (if (null? tail)
+          guess
+          (if (> (get-index guess) (get-index (car tail)))
+              (iter guess (cdr tail))
+              (iter (car tail) (cdr tail)))))
+    (iter (car types) (cdr types)))
+ 
+  (raise (raise (raise (make-integer 42))))
   )
 
 (install-tower-package)
 
-(define tower '(integer rational number complex))
-
-(define (index-tower tower)
-  (define (iter i result tail)
-    (if (null? tail)
-        result
-        (iter (+ 1 i) (cons (cons i (car tail)) result) (cdr tail))))
-  (iter 0 '() tower))
-
-; bad method
-(define (get-index type)
-  (define (iter tail)
-    (if (null? tail)
-        (- 0 1)
-        (let ((x (car tail)))
-          (if (eq? (cdr x) type)
-              (car x)
-              (iter (cdr tail))))))
-  (let ((set (index-tower tower)))
-    (iter set)))
-
-(define (max-type types)
-  (define (iter max tail)
-    (if (null? tail)
-        max
-        (if (> (get-index max) (get-index (car tail)))
-            (iter max (cdr tail))
-            (iter (car tail) (cdr tail)))))
-  (iter (car types) (cdr types)))
-
-(max-type '(complex number integer))
 
 
-  
+
