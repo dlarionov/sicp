@@ -10,6 +10,101 @@
 
 (define (square x) (* x x))
 
+(define (install-integer-package)
+  (define (tag x) (attach-tag 'integer x))  
+  (put 'make 'integer (lambda (x) (tag x)))
+  (put 'raise '(integer) (lambda (x) (make-rational x 1)))
+  (put 'add '(integer integer) (lambda (x y) (tag (+ x y))))
+  (put 'add '(integer integer integer) (lambda (x y z) (tag (+ x y z))))
+  )
+
+(define (install-rational-package)
+  (define (gcd a b)
+    (if (= a 0)
+        b
+        (gcd (remainder b a) a)))
+  (define (make-rat n d)
+    (let ((g (gcd n d)))
+      (cons (/ n g) (/ d g))))
+  (define numer car)
+  (define denom cdr)
+  (define (add-rat x y)
+    (make-rat (+ (* (numer x) (denom y))
+                 (* (numer y) (denom x)))
+              (* (denom x) (denom y))))
+  
+  (define (tag x) (attach-tag 'rational x))  
+  (put 'make 'rational (lambda (n d) (tag (make-rat n d))))
+  (put 'raise '(rational) (lambda (x) (make-number (/ (numer x) (denom x)))))
+  (put 'add '(rational rational) (lambda (x y) (tag (add-rat x y))))
+  (put 'add '(rational rational rational) (lambda (x y z) (tag (add-rat z (add-rat x y)))))
+  )
+
+(define (install-number-package)
+  (define (tag x) (attach-tag 'number x))
+  (put 'make 'number (lambda (x) (tag x)))
+  (put 'raise '(number) (lambda (x) (make-complex x 0)))
+  (put 'add '(number number) (lambda (x y) (tag (+ x y))))
+  (put 'add '(number number number) (lambda (x y z) (tag (+ x y z))))
+  )
+
+(define (install-complex-package)
+  (define (make-from-real-imag x y) (cons x y))  
+  (define (real-part z) (car z))  
+  (define (imag-part z) (cdr z))  
+  (define (add-complex z1 z2)
+    (make-from-real-imag (+ (real-part z1) (real-part z2))
+                         (+ (imag-part z1) (imag-part z2))))
+  
+  (define (tag x) (attach-tag 'complex x))  
+  (put 'make 'complex (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'add '(complex complex) (lambda (z1 z2) (tag (add-complex z1 z2))))
+  (put 'add '(complex complex complex) (lambda (z1 z2 z3) (tag (add-complex z3 (add-complex z1 z2)))))
+  )
+
+(install-integer-package)
+(install-rational-package)
+(install-number-package)
+(install-complex-package)
+  
+(define (make-integer x) ((get 'make 'integer) x))
+(define (make-rational n d) ((get 'make 'rational) n d))
+(define (make-number x) ((get 'make 'number) x))
+(define (make-complex x y) ((get 'make 'complex) x y))
+
+(define tower
+  '((integer 1)
+    (rational 2)
+    (number 3)
+    (complex 4)))
+
+(define (tower-index x)
+  (define (iter tail)
+    (if (null? tail)
+        -1
+        (let ((i (car tail)))
+          (if (eq? (car i) x)
+              (car (cdr i))
+              (iter (cdr tail))))))
+  (iter tower))
+
+(define (max-type types)
+  (define (iter guess tail)
+    (if (null? tail)
+        guess
+        (if (> (tower-index guess) (tower-index (car tail)))
+            (iter guess (cdr tail))
+            (iter (car tail) (cdr tail)))))
+  (iter (car types) (cdr types)))
+
+(define (raise-to type x)
+  (if (eq? (type-tag x) type)
+      x
+      (raise-to type (raise x))))
+
+(define (raise-args type args)
+  (map (lambda(x) (raise-to type x)) args))
+
 (define (apply-generic op . args)  
   (define (apply-generic-internal local-args)
     (let ((type-tags (map type-tag local-args)))
@@ -30,122 +125,7 @@
 
 (define (raise z) (apply-generic 'raise z))
 
-(define (raise-args type args)
-  args)
-(define (max-type types)
-  (car types))
-
-(define (install-integer-package)
-  (define (tag x) (attach-tag 'integer x))  
-  (put 'make 'integer (lambda (x) (tag x)))  
-  )
-
-(define (install-rational-package)
-  (define (gcd a b)
-    (if (= a 0)
-        b
-        (gcd (remainder b a) a)))
-  (define (make-rat n d)
-    (let ((g (gcd n d)))
-      (cons (/ n g) (/ d g))))
-  (define numer car)
-  (define denom cdr) 
-  
-  (define (tag x) (attach-tag 'rational x))  
-  (put 'make 'rational (lambda (n d) (tag (make-rat n d))))
-  (put 'numer 'rational numer)
-  (put 'denom 'rational denom) 
-  )
-
-(define (install-number-package)
-  (define (tag x) (attach-tag 'number x))
-  (put 'make 'number (lambda (x) (tag x)))  
-  )
-
-(define (install-polar-package)
-  (define (magnitude z) (car z))
-  (define (angle z) (cdr z))
-  (define (make-from-mag-ang r a) (cons r a))
-  (define (real-part z) (* (magnitude z) (cos (angle z))))
-  (define (imag-part z) (* (magnitude z) (sin (angle z))))
-  (define (make-from-real-imag x y) (cons (sqrt (+ (square x) (square y))) (atan y x)))
-  
-  (define (tag x) (attach-tag 'polar x))
-  (put 'make-from-real-imag 'polar (lambda (x y) (tag (make-from-real-imag x y))))
-  (put 'make-from-mag-ang 'polar (lambda (r a) (tag (make-from-mag-ang r a)))))
-
-(define (install-rectangular-package)
-  (define (real-part z) (car z))
-  (define (imag-part z) (cdr z))
-  (define (make-from-real-imag x y) (cons x y))
-  (define (magnitude z) (sqrt (+ (square (real-part z)) (square (imag-part z)))))
-  (define (angle z) (atan (imag-part z) (real-part z)))
-  (define (make-from-mag-ang r a) (cons (* r (cos a)) (* r (sin a))))
-  
-  (define (tag x) (attach-tag 'rectangular x))  
-  (put 'make-from-real-imag 'rectangular (lambda (x y) (tag (make-from-real-imag x y))))
-  (put 'make-from-mag-ang 'rectangular (lambda (r a) (tag (make-from-mag-ang r a))))
-  )
-
-(define (install-complex-package)
-  (install-rectangular-package)
-  (install-polar-package)
-  
-  (define (make-from-real-imag x y) ((get 'make-from-real-imag 'rectangular) x y))
-  (define (make-from-mag-ang r a) ((get 'make-from-mag-ang 'polar) r a))
-  
-  (define (tag z) (attach-tag 'complex z))
-  (put 'make-from-real-imag 'complex (lambda (x y) (tag (make-from-real-imag x y))))
-  (put 'make-from-mag-ang 'complex (lambda (x y) (tag (make-from-mag-ang x y))))
-  )
-
-(define (install-tower-package)
-  (install-integer-package)
-  (install-rational-package)
-  (install-number-package)
-  (install-complex-package)
-  
-  (define (make-integer x) ((get 'make 'integer) x))
-  (define (make-rational n d) ((get 'make 'rational) n d))
-  (define (numer z) ((get 'numer 'rational) z))
-  (define (denom z) ((get 'denom 'rational) z))
-  (define (make-number x) ((get 'make 'number) x))
-  (define (make-complex-from-real-imag x y) ((get 'make-from-real-imag 'complex) x y))
-  (define (make-complex-from-mag-ang r a) ((get 'make-from-mag-ang 'complex) r a))  
-  
-  (put 'raise '(integer) (lambda (x) (make-rational x 1)))
-  (put 'raise '(rational) (lambda (x) (make-number (/ (numer x) (denom x)))))
-  (put 'raise '(number) (lambda (x) (make-complex-from-real-imag x 0)))
-
-  (define tower
-    '((integer 1)
-      (rational 2)
-      (number 3)
-      (complex 4)))
-
-  (define (get-index x)
-    (define (iter tail)
-      (if (null? tail)
-          -1
-          (let ((i (car tail)))
-            (if (eq? (car i) x)
-                (cdr i)
-                (iter (cdr tail))))))
-    (iter tower))
-
-  (define (max-type types)
-    (define (iter guess tail)
-      (if (null? tail)
-          guess
-          (if (> (get-index guess) (get-index (car tail)))
-              (iter guess (cdr tail))
-              (iter (car tail) (cdr tail)))))
-    (iter (car types) (cdr types)))
- 
-  (raise (raise (raise (make-integer 42))))
-  )
-
-(install-tower-package)
+(apply-generic 'add (make-integer 1) (make-complex 1 3) (make-rational 1 3))
 
 
 
