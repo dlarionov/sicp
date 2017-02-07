@@ -2,9 +2,9 @@
 
 (define (square x) (* x x))
 
-(define *op-table* (make-hash))
-(define (put op type proc) (hash-set! *op-table* (list op type) proc))
-(define (get op type) (hash-ref *op-table* (list op type) '()))
+(define table (make-hash))
+(define (put op type proc) (hash-set! table (list op type) proc))
+(define (get op type) (hash-ref table (list op type) '()))
 
 (define (attach-tag type-tag contents)
   (if (eq? type-tag 'integer)
@@ -27,11 +27,20 @@
 (define (zero? x) (apply-generic 'zero? x))
 
 (define (raise z) (apply-generic 'raise z))
-(define (raise-to type x)
-  (if (eq? (type-tag x) type)
+(define (raise-index x)
+  (define (iter i type guess)
+    (let ((guess-type (type-tag guess)))
+      (if (eq? type guess-type)
+          i
+          (iter (+ i 1) guess-type (raise guess)))))
+  (iter 0 (type-tag x) (raise x)))
+(define (raise-to-index i x)
+  (if (= (raise-index x) i)
       x
-      (raise-to type (raise x))))
-(define (raise-args type args) (map (lambda(x) (raise-to type x)) args))
+      (raise-to-index i (raise x))))
+(define (raise-args args)
+  (let ((i (apply min (map raise-index args))))
+    (map (lambda(x) (raise-to-index i x)) args)))
 
 (define (project z) (apply-generic 'project z))
 (define (drop z)
@@ -39,32 +48,6 @@
     (if (eq? (type-tag z) (type-tag p))
         z
         (drop p))))
-
-(define (real-part z) (apply-generic 'real-part z))
-(define (imag-part z) (apply-generic 'imag-part z))
-(define (magnitude z) (apply-generic 'magnitude z))
-(define (angle z) (apply-generic 'angle z))
-
-(define tower '((integer 1) (rational 2) (real 3) (complex 4)))
-
-(define (tower-index x)
-  (define (iter tail)
-    (if (null? tail)
-        -1
-        (let ((i (car tail)))
-          (if (eq? (car i) x)
-              (car (cdr i))
-              (iter (cdr tail))))))
-  (iter tower))
-
-(define (max-type types)
-  (define (iter guess tail)
-    (if (null? tail)
-        guess
-        (if (> (tower-index guess) (tower-index (car tail)))
-            (iter guess (cdr tail))
-            (iter (car tail) (cdr tail)))))
-  (iter (car types) (cdr types)))
 
 (define (apply-generic op . args)  
   (define (apply-generic-internal local-args)
@@ -77,7 +60,7 @@
     (if (null? result1)
         (let ((types (remove-duplicates (map type-tag args))))
           (if (> (length types) 1)              
-              (let ((result2 (apply-generic-internal (raise-args (max-type types) args))))
+              (let ((result2 (apply-generic-internal (raise-args args))))
                 (if (null? result2)                    
                     (error "No method for these types")
                     result2))
@@ -161,6 +144,11 @@
   (put 'magnitude '(rectangular) magnitude)
   (put 'angle '(rectangular) angle)
   )
+
+(define (real-part z) (apply-generic 'real-part z))
+(define (imag-part z) (apply-generic 'imag-part z))
+(define (magnitude z) (apply-generic 'magnitude z))
+(define (angle z) (apply-generic 'angle z))
 
 (define (install-polar-package)
   (define (magnitude z) (car z))
