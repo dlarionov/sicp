@@ -1,7 +1,4 @@
 #lang racket
-
-; arithmetical package
-
 (define (square x) (* x x))
 
 (define table (make-hash))
@@ -27,6 +24,7 @@
 (define (div x y) (apply-generic 'div x y))
 (define (equ? x y) (apply-generic 'equ? x y))
 (define (zero? x) (apply-generic 'zero? x))
+(define (minus x) (apply-generic 'minus x))
 
 (define (raise z) (apply-generic 'raise z))
 (define (raise-index x)
@@ -85,6 +83,7 @@
   (put 'zero? '(integer) (lambda (x) (= x 0)))
   (put 'raise '(integer) (lambda (x) (make-rational x 1)))
   (put 'project '(integer) (lambda (x) (tag x)))
+  (put 'minus '(integer) (lambda (x) (tag (- x))))
   )
 
 (define (install-rational-package)
@@ -111,6 +110,7 @@
                               (cond ((= (numer x) 0) (make-integer 0))
                                     ((= (denom x) 1) (make-integer (numer x)))
                                     (else (tag x)))))
+  (put 'minus '(rational) (lambda (x) (mul -1 (tag x))))
   )
 
 (define (install-real-package)
@@ -127,6 +127,7 @@
                           (if (= (round x) x)
                               (make-integer x)
                               (tag x))))
+  (put 'minus '(real) (lambda (x) (tag (- x))))
   )
 
 (define (install-rectangular-package)
@@ -198,6 +199,7 @@
                              (if (= (imag-part x) 0)
                                  (make-real (real-part x))
                                  (tag x))))
+  (put 'minus '(complex) (lambda (x) (mul -1 (tag x))))
   )
 
 (install-integer-package)
@@ -205,7 +207,6 @@
 (install-rational-package)
 (install-complex-package)
 
-; 2.87 exercise
 (define (variable? x) (symbol? x))
 (define (same-variable? x y) (and (variable? x) (variable? y) (eq? x y)))
 
@@ -261,12 +262,18 @@
     (if (same-variable? (variable p1) (variable p2))
         (make-poly (variable p1) (mul-terms (term-list p1) (term-list p2)))
         (error "variables are not the same")))
+
+  (define (minus-poly p) (make-poly (variable p) (map
+                                                  (lambda(x) (make-term (order x) (minus (coeff x))))
+                                                  (term-list p))))
   
   (define (tag x) (attach-tag 'polynomial x))
   (put 'make 'polynomial (lambda (var terms) (tag (make-poly var terms))))
   (put 'add '(polynomial polynomial) (lambda (p1 p2) (tag (add-poly p1 p2))))
   (put 'mul '(polynomial polynomial) (lambda (p1 p2) (tag (mul-poly p1 p2))))
-  (put 'zero? '(polynomial) (lambda (x) (empty-termlist? (term-list x))))
+  (put 'sub '(polynomial polynomial) (lambda (p1 p2) (tag (add-poly p1 (minus-poly p2)))))
+  (put 'zero? '(polynomial) (lambda (x) (empty-termlist? (term-list x)))) ; TODO poly is null when all coeffs are null.
+  (put 'minus '(polynomial) (lambda (x) (tag (minus-poly x))))
   )
 
 (install-polynomial-package)
@@ -290,20 +297,19 @@
 
 (add x1 x2)
 (mul x1 x2)
+(sub x1 x2)
 
-(define y1 (make-polynomial
-            'x
-            (list
-             (list 2 3)
-             (list 1 (make-complex 2 3))
-             (list 0 7))))
+(define y1 (make-polynomial 'x
+                            (list
+                             (list 2 (make-polynomial 'y (list (list 1 1) (list 0 1))))
+                             (list 1 (make-polynomial 'y (list (list 2 1) (list 0 1))))
+                             (list 0 (make-polynomial 'y (list (list 1 1) (list 0 -1)))))))
 
-(define y2 (make-polynomial
-            'x
-            (list
-             (list 4 1)
-             (list 2 (make-rational 2 3))
-             (list 0 (make-complex 5 3)))))
+(define y2 (make-polynomial 'x
+                            (list
+                             (list 1 (make-polynomial 'y (list (list 1 1) (list 0 -2))))
+                             (list 0 (make-polynomial 'y (list (list 3 1) (list 0 7)))))))
 
 (add y1 y2)
 (mul y1 y2)
+(sub y1 y2)
