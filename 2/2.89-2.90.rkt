@@ -306,7 +306,6 @@
         (make-poly (variable p1) (mul-terms (term-list p1) (term-list p2)))
         (error "variables are not the same")))
   
-  ;TODO
   (define (zero-poly? p)
     (null?
      (filter
