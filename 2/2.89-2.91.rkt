@@ -296,15 +296,37 @@
            (make-term (+ (order t1) (order t2)) (mul (coeff t1) (coeff t2)))
            (mul-term-by-all-terms t1 (rest-terms L))))))
 
+  (define (div-terms L1 L2)
+    (if (empty? L1)
+        (list '() '())
+        (let ((t1 (first-term L1))
+              (t2 (first-term L2)))
+          (if (> (order t2) (order t1))
+              (list '() L1)
+              (let ((new-c (div (coeff t1) (coeff t2)))
+                    (new-o (- (order t1) (order t2))))
+                (let ((rest-of-result
+                       () ))
+                  () ))))))
+  
   (define (add-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
         (make-poly (variable p1) (add-terms (term-list p1) (term-list p2)))
         (error "variables are not the same")))
+  
   (define (mul-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
         (make-poly (variable p1) (mul-terms (term-list p1) (term-list p2)))
         (error "variables are not the same")))
 
+  (define (div-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (let ((quotient-and-remainder (div-terms (term-list p1) (term-list p2))))          
+          (cons
+           (make-poly (variable p1) (car quotient-and-remainder))
+           (make-poly (variable p1) (cdr quotient-and-remainder))))
+        (error "variables are not the same")))
+  
   (define (zero-poly? p)
     (define (iter tail)
       (if (empty? tail)
@@ -321,6 +343,7 @@
   (put 'add '(polynomial polynomial) (lambda (p1 p2) (tag (add-poly p1 p2))))
   (put 'mul '(polynomial polynomial) (lambda (p1 p2) (tag (mul-poly p1 p2))))
   (put 'sub '(polynomial polynomial) (lambda (p1 p2) (tag (add-poly p1 (negate-poly p2)))))
+  ;(put 'div '(polynomial polynomial) (lambda (p1 p2) (tag (div-poly p1 p2))))
   (put 'zero? '(polynomial) (lambda (x) (zero-poly? x)))
   (put 'negate '(polynomial) (lambda (x) (tag (negate-poly x))))
   )
