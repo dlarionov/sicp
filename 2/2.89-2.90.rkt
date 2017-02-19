@@ -81,7 +81,6 @@
   (put 'project '(integer) (lambda (x) (tag x)))
   (put 'negate '(integer) (lambda (x) (tag (- x))))
   )
-
 (define (make-integer x) ((get 'make 'integer) x))
 
 (define (install-rational-package)
@@ -110,7 +109,6 @@
                                     (else (tag x)))))
   (put 'negate '(rational) (lambda (x) (mul -1 (tag x))))
   )
-
 (define (make-rational n d) ((get 'make 'rational) n d))
 
 (define (install-real-package)
@@ -129,7 +127,6 @@
                               (tag x))))
   (put 'negate '(real) (lambda (x) (tag (- x))))
   )
-
 (define (make-real x) ((get 'make 'real) x))
 
 (define (install-rectangular-package)
@@ -205,7 +202,6 @@
                                  (tag x))))
   (put 'negate '(complex) (lambda (x) (mul -1 (tag x))))
   )
-
 (define (make-complex x y) ((get 'make-from-real-imag 'complex) x y))
 
 (install-integer-package)
@@ -224,7 +220,8 @@
     (put 'first-term '(dense-terms) (lambda(x) (tag-term (make-term (length (cdr x)) (car x)))))
     (put 'rest-terms '(dense-terms) (lambda(x) (tag (cdr x))))
     (put 'adjoin-term '(term dense-terms) (lambda(x y) (tag (cons (coeff x) y))))
-    (put 'zero? '(dense-terms) (lambda(x) (null? x)))
+    (put 'empty? '(dense-terms) (lambda(x) (null? x)))
+    (put 'negate '(dense-terms) (lambda (x) (tag (map negate x))))
     )
   
   (define (install-sparse-package)
@@ -238,18 +235,19 @@
     (put 'first-term '(sparse-terms) (lambda(x) (let ((i (car x)))(tag-term (make-term (order i) (coeff i))))))
     (put 'rest-terms '(sparse-terms) (lambda(x) (tag (cdr x))))
     (put 'adjoin-term '(term sparse-terms) (lambda(x y) (tag (adjoin-term x y))))
-    (put 'zero? '(sparse-terms) (lambda(x) (null? x)))
+    (put 'empty? '(sparse-terms) (lambda(x) (null? x)))
+    (put 'negate '(sparse-terms) (lambda (x) (tag (map (lambda(i) (make-term (order i) (negate (coeff i)))) x))))
     )  
   
   (define (tag-term x) (attach-tag 'term x))
   (put 'make 'term (lambda(order coeff) (tag-term (make-term order coeff))))
   (put 'order '(term) order)
   (put 'coeff '(term) coeff)
+  (put 'zero? '(term) (lambda(x) (zero? (coeff x))))
 
   (install-dense-package)
   (install-sparse-package)
   )
-
 (define (make-term order coeff) ((get 'make 'term) order coeff))
 (define (make-sparse-terms x) ((get 'make 'sparse-terms) x))
 (define (make-dense-terms x) ((get 'make 'dense-terms) x))
@@ -259,6 +257,7 @@
 (define (first-term terms) (apply-generic 'first-term terms))
 (define (rest-terms terms) (apply-generic 'rest-terms terms))
 (define (adjoin-term term terms) (apply-generic 'adjoin-term term terms))
+(define (empty? terms) (apply-generic 'empty? terms))
 
 (define (install-polynomial-package)  
   (install-terms-package)
@@ -271,8 +270,8 @@
   (define (term-list p) (cdr p))
   
   (define (add-terms L1 L2)
-    (cond ((zero? L1) L2)
-          ((zero? L2) L1)
+    (cond ((empty? L1) L2)
+          ((empty? L2) L1)
           (else
            (let ((t1 (first-term L1)) 
                  (t2 (first-term L2)))            
@@ -283,14 +282,14 @@
                          (add-terms (rest-terms L1) (rest-terms L2)))))))))
   
   (define (mul-terms L1 L2)
-    (if (zero? L1)
+    (if (empty? L1)
         '()
         (add-terms 
          (mul-term-by-all-terms (first-term L1) L2)
          (mul-terms (rest-terms L1) L2))))
 
   (define (mul-term-by-all-terms t1 L)
-    (if (zero? L)
+    (if (empty? L)
         '()
         (let ((t2 (first-term L)))
           (adjoin-term
@@ -305,18 +304,25 @@
     (if (same-variable? (variable p1) (variable p2))
         (make-poly (variable p1) (mul-terms (term-list p1) (term-list p2)))
         (error "variables are not the same")))
-  
+
   (define (zero-poly? p)
-    (null?
-     (filter
-      (lambda(i) (not (zero? (coeff i))))
-      (term-list p))))
+    (define (iter tail)
+      (if (empty? tail)
+          true
+          (if (zero? (first-term tail))              
+              (iter (rest-terms tail))
+              false)))
+    (iter (term-list p)))
+
+  (define (negate-poly p) (make-poly (variable p) (negate (term-list p))))
 
   (define (tag x) (attach-tag 'polynomial x))
   (put 'make 'polynomial (lambda (var terms) (tag (make-poly var terms))))  
   (put 'add '(polynomial polynomial) (lambda (p1 p2) (tag (add-poly p1 p2))))
   (put 'mul '(polynomial polynomial) (lambda (p1 p2) (tag (mul-poly p1 p2))))
+  (put 'sub '(polynomial polynomial) (lambda (p1 p2) (tag (add-poly p1 (negate-poly p2)))))
   (put 'zero? '(polynomial) (lambda (x) (zero-poly? x)))
+  (put 'negate '(polynomial) (lambda (x) (tag (negate-poly x))))
   )
 
 (define (make-polynomial var terms) ((get 'make 'polynomial) var terms))
@@ -326,11 +332,11 @@
 (define x1 (make-polynomial 'x (make-dense-terms (list 3 (make-complex 2 3) 0 7))))
 (define x2 (make-polynomial 'x (make-dense-terms (list 1 0 (make-rational 2 3) 0 (make-complex 5 3)))))
 x1
-x2
-(add x1 x2)
+(negate x2)
+(sub x1 x2)
 
 (define x3 (make-polynomial 'x (make-sparse-terms (list (list 3 3) (list 2 (make-complex 2 3)) (list 0 7)))))
 (define x4 (make-polynomial 'x (make-sparse-terms (list (list 4 1) (list 2 (make-rational 2 3)) (list 0 (make-complex 5 3))))))
 x3
-x4
-(add x3 x4)
+(negate x4)
+(sub x3 x4)
