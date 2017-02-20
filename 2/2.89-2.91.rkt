@@ -303,11 +303,16 @@
               (t2 (first-term L2)))
           (if (> (order t2) (order t1))
               (list '() L1)
-              (let ((new-c (div (coeff t1) (coeff t2)))
-                    (new-o (- (order t1) (order t2))))
+              (let ((new-coeff (div (coeff t1) (coeff t2)))
+                    (new-order (- (order t1) (order t2))))
                 (let ((rest-of-result
-                       () ))
-                  () ))))))
+                       (div-terms
+                        (add-terms L1 (negate (mul-term-by-all-terms (make-term new-order new-coeff) L2)))
+                        L2)))
+                  (list
+                   (adjoin-term (make-term new-order new-coeff) (car rest-of-result))
+                   (cadr rest-of-result)))
+                )))))
   
   (define (add-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
