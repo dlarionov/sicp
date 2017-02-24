@@ -299,8 +299,8 @@
            (mul-term-by-all-terms t1 (rest-terms L))))))
 
   (define (div-terms L1 L2)
-    (print (list 'div L1 L2))
-    (newline)
+    ;(print (list 'div L1 L2))
+    ;(newline)
     (if (empty? L1)
         (list L1 L1)
         (let ((t1 (first-term L1))
@@ -372,14 +372,25 @@
 
 (define x1 (make-polynomial 'x (make-dense-terms (list 1 0 0 0 0 -1))))
 (define x2 (make-polynomial 'x (make-dense-terms (list 1 0 -1))))
+(define x3 (make-polynomial 'x (make-sparse-terms (list (list 5 1) (list 0 -1)))))
+(define x4 (make-polynomial 'x (make-sparse-terms (list (list 2 1) (list 0 -1)))))
+
 (add x1 x2)
 (sub x1 x2)
 (mul x1 x2)
 (div x1 x2)
 
-(define x3 (make-polynomial 'x (make-sparse-terms (list (list 5 1) (list 0 -1)))))
-(define x4 (make-polynomial 'x (make-sparse-terms (list (list 2 1) (list 0 -1)))))
 (add x3 x4)
 (sub x3 x4)
 (mul x3 x4)
 (div x3 x4)
+
+(add x1 x4)
+(sub x1 x4)
+(mul x1 x4)
+(div x1 x4)
+
+(add x2 x3)
+(sub x2 x3)
+(mul x2 x3)
+(div x2 x3)
