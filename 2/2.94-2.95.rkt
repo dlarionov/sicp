@@ -94,6 +94,7 @@
            (mul-term-by-all-terms t1 (rest-terms L))))))
 
   (define (div-terms L1 L2)
+    (print (list 'div L1 L2))(newline)
     (if (null? L1)
         (list '() '())
         (let ((t1 (first-term L1))
@@ -112,6 +113,7 @@
     (cadr (div-terms L1 L2)))
 
   (define (gcd-terms L1 L2)
+    (print (list 'gcd-terms L1 L2))(newline)
     (if (null? L2)
         L1
         (gcd-terms L2 (remainder-terms L1 L2))))  
@@ -163,6 +165,12 @@
 (define (make-rat n d) ((get 'make 'rational) n d))
 (define (make-polynomial var terms) ((get 'make 'polynomial) var terms))
 
-(define x1 (make-polynomial 'x '((4 1) (3 -1) (2 -2) (1 2))))
-(define x2 (make-polynomial 'x '((3 1) (1 -1))))
-(gcd x1 x2)
+;(define x1 (make-polynomial 'x '((4 1) (3 -1) (2 -2) (1 2))))
+;(define x2 (make-polynomial 'x '((3 1) (1 -1))))
+;(gcd x1 x2)
+
+(define p1 (make-polynomial 'x '((2 1) (1 -1) (0 1))))
+(define p2 (make-polynomial 'x '((2 11) (0 1))))
+(define p3 (make-polynomial 'x '((1 13) (0 5))))
+(gcd (mul p1 p2) (mul p1 p3))
+p1
