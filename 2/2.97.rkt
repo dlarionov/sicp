@@ -17,7 +17,7 @@
             (apply proc (map contents local-args))))))
   (let ((result (apply-generic-internal args)))
     (if (null? result)
-        (error "Method not found" (cons op (map type-tag args)))
+        (error "Method not found" (cons op args))
         result)))
 
 (define (add x y) (if (and (number? x) (number? y)) (+ x y) (apply-generic 'add x y)))
@@ -27,9 +27,14 @@
 (define (zero? x) (if (number? x) (= x 0) (apply-generic 'zero? x)))
 (define (negate x) (if (number? x) (- x) (apply-generic 'negate x)))
 (define (nod x y) (if (and (number? x) (number? y)) (gcd x y) (apply-generic 'nod x y)))
+(define (reduce x y) (if (and (number? x) (number? y))
+                         (let ((g (gcd x y)))
+                           (list (/ x g) (/ y g)))
+                         (apply-generic 'reduce x y)))
 
-(define (install-rational-package)  
-  (define (make-rat n d) (let ((g (nod n d))) (cons (div n g) (div d g))))
+(define (install-rational-package)
+  (define (make-rat n d) (let ((nn-dd (reduce n d)))      
+      (cons (car nn-dd) (cadr nn-dd))))
   (define numer car)
   (define denom cdr)
   
@@ -47,6 +52,7 @@
   (put 'zero? '(rational) (lambda (x) (zero? (numer x))))
   (put 'negate '(rational) (lambda (x) (tag (make-rat (negate (numer x)) (denom x)))))
   (put 'nod '(rational rational) (lambda (x y) (error "Method not implemented")))
+  (put 'reduce '(rational rational) (lambda (x y) (error "Method not implemented")))
   )
 
 (define (install-polynomial-package)    
@@ -114,21 +120,29 @@
             (O2 (order t2))
             (C2 (coeff t2)))      
         (let ((factor (expt C2 (+ 1 O1 (- O2)))))
-          ;(print factor)(newline)
           (cadr (div-terms                 
                  (mul-term-by-all-terms
                   (make-term 0 factor) L1)
                  L2))))))
 
   (define (nod-terms L1 L2)
-    ;(print (list 'nod-terms L1 L2))(newline)
     (if (null? L2)
         L1
         (nod-terms L2 (pseudoremainder-terms L1 L2))))  
 
-  (define (reduce-terms L)
+  (define (shrink-terms L)
     (let ((factor (apply gcd (map coeff L))))
       (map (lambda(i) (make-term (order i) (/ (coeff i) factor))) L)))
+
+  (define (reduce-terms L1 L2)
+    (let ((g (nod-terms L1 L2)))      
+      (let ((t (first-term g)))        
+        (let ((O1 (order t))
+              (O2 (max (order (first-term L1)) (order (first-term L2))))
+              (C (coeff t)))
+          (let ((f-term (make-term 0 (expt C (+ 1 O1 (- O2))))))            
+            (list (shrink-terms (car (div-terms (mul-term-by-all-terms f-term L1) g)))
+                  (shrink-terms (car (div-terms (mul-term-by-all-terms f-term L2) g)))))))))
   
   (define (add-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
@@ -145,12 +159,20 @@
         (let ((quotient-and-remainder (div-terms (term-list p1) (term-list p2))))          
           (list
            (make-poly (variable p1) (car quotient-and-remainder))
-           (make-poly (variable p1) (cdr quotient-and-remainder))))
+           (make-poly (variable p1) (cadr quotient-and-remainder))))
         (error "Variables are not the same")))
 
   (define (nod-polys p1 p2)
     (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1) (reduce-terms (nod-terms (term-list p1) (term-list p2))))
+        (make-poly (variable p1) (shrink-terms (nod-terms (term-list p1) (term-list p2))))
+        (error "Variables are not the same")))
+
+  (define (reduce-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (let ((r (reduce-terms (term-list p1) (term-list p2))))       
+          (list
+           (make-poly (variable p1) (car r))
+           (make-poly (variable p1) (cadr r))))
         (error "Variables are not the same")))
   
   (define (negate-poly p)
@@ -169,6 +191,7 @@
   (put 'zero? '(polynomial) (lambda (x) (null? x)))
   (put 'negate '(polynomial) (lambda (x) (tag (negate-poly x))))
   (put 'nod '(polynomial polynomial) (lambda (p1 p2) (tag (nod-polys p1 p2))))
+  (put 'reduce '(polynomial polynomial) (lambda (p1 p2) (let ((result (reduce-poly p1 p2))) (list (tag (car result)) (tag (cadr result))))))
   )
 
 (install-rational-package)
@@ -177,8 +200,10 @@
 (define (make-rat n d) ((get 'make 'rational) n d))
 (define (make-polynomial var terms) ((get 'make 'polynomial) var terms))
 
-(define p1 (make-polynomial 'x '((2 1) (1 -1) (0 1))))
-(define p2 (make-polynomial 'x '((2 11) (0 1))))
-(define p3 (make-polynomial 'x '((1 13) (0 5))))
-(nod (mul p1 p2) (mul p1 p3))
-p1
+(define p1 (make-polynomial 'x '((1 1) (0 1))))
+(define p2 (make-polynomial 'x '((3 1) (0 -1))))
+(define p3 (make-polynomial 'x '((1 1))))
+(define p4 (make-polynomial 'x '((2 1) (0 -1))))
+(define rf1 (make-rat p1 p2))
+(define rf2 (make-rat p3 p4))
+(add rf1 rf2)
