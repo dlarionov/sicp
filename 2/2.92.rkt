@@ -1,5 +1,7 @@
 #lang racket
 
+; TODO finish exercise
+
 (define *table (make-hash))
 (define (put op type proc) (hash-set! *table (list op type) proc))
 (define (get op type) (hash-ref *table (list op type) '()))
@@ -16,7 +18,6 @@
             '()
             (apply proc (map contents local-args))))))
   (let ((result (apply-generic-internal args)))
-    ;(print (list 'apply-generic op args)) (newline)    
     (if (null? result)
         (error "No method for these types" (cons op (map type-tag args)))
         result)))
@@ -125,8 +126,7 @@
 
 (define (make-polynomial var terms) ((get 'make 'polynomial) var terms))
 
-(define p1 (make-polynomial 'x (list (list 2 1) (list 0 -1))))
-(define p2 (make-polynomial 'x (list (list 1 2) (list 0 2))))
+(define p1 (make-polynomial 'x '((2 1) (0 -1))))
+(define p2 (make-polynomial 'y '((1 (make-polynomial 'x '((2 1) (0 -1)))) (0 2))))
 
 (add p1 p2)
-(div p1 p2)
